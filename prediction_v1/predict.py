@@ -303,31 +303,33 @@ while iter_num < 20:
 
     # update vacant vehicle flow
     v_dic = {}
+    TOTAL_VEHICLE_FLOW = 0
     for node_id in node_dict.keys():
+        v_dic[node_id] = 0
 
-        v_i = 0
-        for seeker_id in seekers.keys():
+    for seeker_id in seekers.keys():
 
-            P_w = seekers[seeker_id]['matching_prob']
-            v_i += (1-P_w) * seekers[seeker_id]["lambda_4"] + seekers[seeker_id]["lambda_3"]
+        P_w = seekers[seeker_id]['matching_prob']
+        node_id = OD_dict[seeker_id]["destination"]
+        v_dic[node_id] += (1-P_w) * seekers[seeker_id]["lambda_4"] + seekers[seeker_id]["lambda_3"]
             # print('P_w',P_w,'lambda_4',seekers[OD_index]["lambda_4"],'lambda_3',seekers[OD_index]["lambda_3"])
 
         for seeker_id, takers_of_seeker in matches.items():
             for taker in takers_of_seeker:
                 if taker['destination'] == node_id:
-                    v_i += taker["eta_match"] * takers[taker["taker_id"]][taker["taker_route_type"]][taker["link_idx"]]["rho_taker"]
+                    v_dic[node_id] += takers[taker["taker_id"]][taker["taker_route_type"]][taker["link_idx"]]["lambda_taker"] * takers[taker["taker_id"]][taker["taker_route_type"]][taker["link_idx"]]["p_taker"]
                     # print('eta',taker["eta_match"],'rho',takers[taker["taker_id"]][taker["taker_route_type"]][taker["link_idx"]]["rho_taker"],'v_i',v_i)
-        v_dic[node_id] = v_i
-    
+        TOTAL_VEHICLE_FLOW += v_dic[node_id]
 
     for OD_id in OD_dict.keys():
-        print('OD id',OD_id, 'mu_old',seekers[OD_id]['mu_w'])
+        # print('OD id',OD_id, 'mu_old',seekers[OD_id]['mu_w'])
         seekers[OD_id]['mu_w'] = 0
         for index, value in v_dic.items():
             seekers[OD_id]['mu_w'] += v_dic[index] * Pi[OD_id]
-        print('OD_id',seekers[OD_id],'mu',seekers[OD_id]['mu_w'],'v_dic',v_dic[index],'Pi',Pi[index][OD_id])
+        # print('mu_new',seekers[OD_id]['mu_w'],'Pi[OD_id]',Pi[OD_id])
     # print('v_dic',v_dic)
 
+    print('total demand', TOTAL_LAMBDA, 'total supply', TOTAL_VEHICLE_FLOW)
     
     iter_num += 1
     # if iter_num >= params["min_iter_time"]:
